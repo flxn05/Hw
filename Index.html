@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        button {
+            display: block;
+            width: 200px;
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Hardware Control Buttons</h2>
+
+    <button onclick="toggleFlashlight()">Toggle Flashlight</button>
+    <button onclick="vibrateDevice()">Vibrate Device</button>
+    <button onclick="getGeolocation()">Get Location</button>
+    <button onclick="toggleWakeLock()">Prevent Screen Sleep</button>
+    <button onclick="getBatteryStatus()">Show Battery Status</button>
+    <button onclick="openCamera()">Open Camera</button>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    <button onclick="copyToClipboard()">Copy Text to Clipboard</button>
+
+    <p id="output"></p>
+
+    <script>
+        // Toggle Flashlight (Only Works on Mobile with Permissions)
+        let flashlightOn = false;
+        async function toggleFlashlight() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                const track = stream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                
+                if (!("torch" in capabilities)) {
+                    alert("Flashlight not supported on this device.");
+                    return;
+                }
+
+                track.applyConstraints({ advanced: [{ torch: !flashlightOn }] });
+                flashlightOn = !flashlightOn;
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        // Vibrate Device
+        function vibrateDevice() {
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            } else {
+                alert("Vibration not supported.");
+            }
+        }
+
+        // Get Geolocation
+        function getGeolocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    document.getElementById("output").innerText = 
+                        `Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}`;
+                }, error => {
+                    alert("Error getting location: " + error.message);
+                });
+            } else {
+                alert("Geolocation not supported.");
+            }
+        }
+
+        // Prevent Screen from Sleeping
+        let wakeLock = null;
+        async function toggleWakeLock() {
+            if (!('wakeLock' in navigator)) {
+                alert("Wake Lock API not supported.");
+                return;
+            }
+            try {
+                if (!wakeLock) {
+                    wakeLock = await navigator.wakeLock.request("screen");
+                    alert("Screen wake lock enabled.");
+                } else {
+                    wakeLock.release();
+                    wakeLock = null;
+                    alert("Screen wake lock disabled.");
+                }
+            } catch (err) {
+                alert("Wake lock error: " + err.message);
+            }
+        }
+
+        // Get Battery Status
+        async function getBatteryStatus() {
+            if (!navigator.getBattery) {
+                alert("Battery API not supported.");
+                return;
+            }
+            const battery = await navigator.getBattery();
+            document.getElementById("output").innerText =
+                `Battery: ${battery.level * 100}% | Charging: ${battery.charging ? "Yes" : "No"}`;
+        }
+
+        // Open Camera
+        function openCamera() {
+            window.open("https://google.com/search?q=open+camera", "_blank");
+        }
+
+        // Toggle Dark Mode
+        function toggleDarkMode() {
+            document.body.style.backgroundColor = 
+                document.body.style.backgroundColor === "black" ? "white" : "black";
+            document.body.style.color = 
+                document.body.style.color === "white" ? "black" : "white";
+        }
+
+        // Copy to Clipboard
+        function copyToClipboard() {
+            navigator.clipboard.writeText("Hello from your device!").then(() => {
+                alert("Text copied to clipboard.");
+            }).catch(err => {
+                alert("Clipboard error: " + err);
+            });
+        }
+
+    </script>
+
+</body>
+</html>
